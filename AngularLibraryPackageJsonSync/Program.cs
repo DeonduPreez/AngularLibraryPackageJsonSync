@@ -201,6 +201,12 @@ class Program
                     continue;
                 }
 
+                if (package.Value!.ToString() == rootPackageJsonEquivalent.Value)
+                {
+                    newPackageJsonDependencies.Add(package.Key, package.Value!.ToString());
+                    continue;
+                }
+
                 newPackageJsonDependencies.Add(package.Key, rootPackageJsonEquivalent.Value);
                 updatedPackages.Add(package.Key, $"in {Dependencies} from {package.Value!} to {rootPackageJsonEquivalent.Value}");
             }
@@ -222,6 +228,12 @@ class Program
                 if (rootPackageJsonEquivalent.Equals(default(KeyValuePair<string, string>)))
                 {
                     removedPackages.Add(package.Key);
+                    continue;
+                }
+
+                if (package.Value!.ToString() == rootPackageJsonEquivalent.Value)
+                {
+                    newPackageJsonPeerDependencies.Add(package.Key, package.Value!.ToString());
                     continue;
                 }
 
@@ -253,6 +265,12 @@ class Program
         if (_dryRun)
         {
             Console.WriteLine("Dry run is enabled, changes have not been saved");
+            return;
+        }
+
+        if (updatedPackages.Count == 0 && removedPackages.Count == 0)
+        {
+            Console.WriteLine("No changes were necessary");
             return;
         }
 
