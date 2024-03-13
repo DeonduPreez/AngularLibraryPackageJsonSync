@@ -4,29 +4,21 @@ using AngularLibraryPackageJsonSync.Models;
 
 namespace AngularLibraryPackageJsonSync.Services;
 
-public class FileService(string angularJsonFileName, string packageJsonFileName, bool isDryRun = true)
+public class FileService(bool isDryRun = true)
 {
-    private string mAngularJsonFileName = angularJsonFileName;
-    private string mPackageJsonFileName = packageJsonFileName;
-    private bool mIsDryRun = isDryRun;
-
-    private const string Dependencies = "dependencies";
-    private const string DevDependencies = "devDependencies";
-    private const string PeerDependencies = "peerDependencies";
-
     public async Task<Dictionary<string, string>> BuildRootPackagesAsync(FileInfo packageJsonFileInfo)
     {
         var rootPackageJson = await GetJsonNodeFromFileInfoAsync(packageJsonFileInfo);
         if (rootPackageJson == null)
         {
-            throw new Exception($"{mPackageJsonFileName} file at {packageJsonFileInfo.FullName} could not be parsed.");
+            throw new Exception($"{Constants.PackageJsonFileName} file at {packageJsonFileInfo.FullName} could not be parsed.");
         }
 
         var rootPackages = new Dictionary<string, string>();
 
-        if (rootPackageJson[Dependencies] != null)
+        if (rootPackageJson[Constants.PackageJsonDependencies] != null)
         {
-            foreach (var package in rootPackageJson[Dependencies]!.AsObject())
+            foreach (var package in rootPackageJson[Constants.PackageJsonDependencies]!.AsObject())
             {
                 if (rootPackages.ContainsKey(package.Key))
                 {
@@ -37,12 +29,12 @@ public class FileService(string angularJsonFileName, string packageJsonFileName,
             }
         }
 
-        if (rootPackageJson[DevDependencies] == null)
+        if (rootPackageJson[Constants.PackageJsonDevDependencies] == null)
         {
             return rootPackages;
         }
 
-        foreach (var package in rootPackageJson[DevDependencies]!.AsObject())
+        foreach (var package in rootPackageJson[Constants.PackageJsonDevDependencies]!.AsObject())
         {
             if (rootPackages.ContainsKey(package.Key))
             {
@@ -66,13 +58,18 @@ public class FileService(string angularJsonFileName, string packageJsonFileName,
 
             var directoryInfo = new DirectoryInfo(currentDirectory);
 
-            var fileInfo = GetFileInfoFromDirectory(currentDirectory, mAngularJsonFileName);
+            var fileInfo = GetFileInfoFromDirectory(currentDirectory, Constants.AngularJsonFileName);
+
+            if (fileInfo != null)
+            {
+                return fileInfo;
+            }
+            
             if (directoryInfo.Parent == null)
             {
                 return null;
             }
 
-            if (fileInfo != null) return fileInfo;
             currentDirectory = directoryInfo.Parent.FullName;
         }
     }
@@ -106,26 +103,26 @@ public class FileService(string angularJsonFileName, string packageJsonFileName,
 
     public async Task SyncLibraryPackagesAsync(DirectoryInfo rootAngularDir, KeyValuePair<string, AngularProject> libraryProject, Dictionary<string, string> rootPackageJsonPackages)
     {
-        var libraryPackageJsonFileInfo = GetFileInfoFromDirectory(Path.Combine(rootAngularDir.FullName, libraryProject.Value.Root), mPackageJsonFileName);
+        var libraryPackageJsonFileInfo = GetFileInfoFromDirectory(Path.Combine(rootAngularDir.FullName, libraryProject.Value.Root), Constants.PackageJsonFileName);
         if (libraryPackageJsonFileInfo == null)
         {
-            Console.WriteLine($"{mPackageJsonFileName} file could not be found in {libraryProject.Value.Root} for library {libraryProject.Key}.");
+            Console.WriteLine($"{Constants.PackageJsonFileName} file could not be found in {libraryProject.Value.Root} for library {libraryProject.Key}.");
             return;
         }
 
         var libraryPackageJson = await GetJsonNodeFromFileInfoAsync(libraryPackageJsonFileInfo);
         if (libraryPackageJson == null)
         {
-            throw new Exception($"{mPackageJsonFileName} file at {libraryPackageJsonFileInfo.FullName} could not be parsed.");
+            throw new Exception($"{Constants.PackageJsonFileName} file at {libraryPackageJsonFileInfo.FullName} could not be parsed.");
         }
 
         var updatedPackages = new Dictionary<string, string>();
         var removedPackages = new List<string>();
 
-        if (libraryPackageJson[Dependencies] != null)
+        if (libraryPackageJson[Constants.PackageJsonDependencies] != null)
         {
             var newPackageJsonDependencies = new Dictionary<string, string>();
-            foreach (var package in libraryPackageJson[Dependencies]!.AsObject())
+            foreach (var package in libraryPackageJson[Constants.PackageJsonDependencies]!.AsObject())
             {
                 if (updatedPackages.ContainsKey(package.Key))
                 {
@@ -147,16 +144,16 @@ public class FileService(string angularJsonFileName, string packageJsonFileName,
                 }
 
                 newPackageJsonDependencies.Add(package.Key, rootPackageJsonEquivalent.Value);
-                updatedPackages.Add(package.Key, $"From {Dependencies} - {package.Value!} -> {rootPackageJsonEquivalent.Value}");
+                updatedPackages.Add(package.Key, $"From {Constants.PackageJsonDependencies} - {package.Value!} -> {rootPackageJsonEquivalent.Value}");
             }
 
-            libraryPackageJson[Dependencies]!.ReplaceWith(newPackageJsonDependencies);
+            libraryPackageJson[Constants.PackageJsonDependencies]!.ReplaceWith(newPackageJsonDependencies);
         }
 
-        if (libraryPackageJson[PeerDependencies] != null)
+        if (libraryPackageJson[Constants.PackageJsonPeerDependencies] != null)
         {
             var newPackageJsonPeerDependencies = new Dictionary<string, string>();
-            foreach (var package in libraryPackageJson[PeerDependencies]!.AsObject())
+            foreach (var package in libraryPackageJson[Constants.PackageJsonPeerDependencies]!.AsObject())
             {
                 if (updatedPackages.ContainsKey(package.Key))
                 {
@@ -177,10 +174,10 @@ public class FileService(string angularJsonFileName, string packageJsonFileName,
                 }
 
                 newPackageJsonPeerDependencies.Add(package.Key, rootPackageJsonEquivalent.Value);
-                updatedPackages.Add(package.Key, $"From {PeerDependencies} - {package.Value!} -> {rootPackageJsonEquivalent.Value}");
+                updatedPackages.Add(package.Key, $"From {Constants.PackageJsonPeerDependencies} - {package.Value!} -> {rootPackageJsonEquivalent.Value}");
             }
 
-            libraryPackageJson[PeerDependencies]!.ReplaceWith(newPackageJsonPeerDependencies);
+            libraryPackageJson[Constants.PackageJsonPeerDependencies]!.ReplaceWith(newPackageJsonPeerDependencies);
         }
         
                 
@@ -208,7 +205,7 @@ public class FileService(string angularJsonFileName, string packageJsonFileName,
             }
         }
 
-        if (mIsDryRun)
+        if (isDryRun)
         {
             Console.WriteLine("Dry run is enabled, changes have not been saved");
             return;
