@@ -2,15 +2,12 @@
 
 public static class ConsoleArgsUtil
 {
-    public static bool ArgExists(IReadOnlyList<string> args, string argName)
+    public static bool ArgExists(string[] args, List<string> argNames)
     {
-        for (var i = 0; i < args.Count; i++)
+        foreach (var argName in argNames)
         {
-            var arg = args[i].ToLower();
-            if (arg == $"-{argName?.ToLower()}")
-            {
-                return true;
-            }
+            var argExists = args.Any(arg => arg.Equals($"-{argName.ToLower()}", StringComparison.CurrentCultureIgnoreCase));
+            if (argExists) return true;
         }
 
         return false;
