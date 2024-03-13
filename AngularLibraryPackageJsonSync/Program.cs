@@ -240,14 +240,12 @@ class Program
 
         var root = document.RootElement;
 
-        if (root.ValueKind == JsonValueKind.Object)
-        {
-            writer.WriteStartObject();
-        }
-        else
+        if (root.ValueKind != JsonValueKind.Object)
         {
             return;
         }
+
+        writer.WriteStartObject();
 
         foreach (var property in root.EnumerateObject())
         {
