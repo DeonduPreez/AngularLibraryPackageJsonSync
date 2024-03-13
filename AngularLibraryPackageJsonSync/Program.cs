@@ -1,6 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Nodes;
-using AngularLibraryPackageJsonSync.Models;
+﻿using AngularLibraryPackageJsonSync.Models;
 using AngularLibraryPackageJsonSync.Services;
 using AngularLibraryPackageJsonSync.Util;
 
