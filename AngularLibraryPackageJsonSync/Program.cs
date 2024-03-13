@@ -1,11 +1,15 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Nodes;
 using AngularLibraryPackageJsonSync.Models;
+using AngularLibraryPackageJsonSync.Util;
 
 namespace AngularLibraryPackageJsonSync;
 
 class Program
 {
+    private const string DryRunArg = "dry-run";
+    private const string DryRunArgAlias = "dr";
+
     private const string AngularJsonFileName = "angular.json";
     private const string PackageJsonFileName = "package.json";
 
@@ -15,10 +19,15 @@ class Program
     private const string DevDependencies = "devDependencies";
     private const string PeerDependencies = "peerDependencies";
 
+    private static bool _dryRun;
+
     private static async Task Main(string[] args)
     {
         try
         {
+            _dryRun = ConsoleArgsUtil.ArgExists(args, DryRunArg);
+            _dryRun = _dryRun || ConsoleArgsUtil.ArgExists(args, DryRunArgAlias);
+
             // Get angular.json in current folder or parent folders
             var angularJsonFileInfo = GetAngularJsonFileInfo(Environment.CurrentDirectory);
             if (angularJsonFileInfo == null)
@@ -193,7 +202,7 @@ class Program
                 }
 
                 newPackageJsonDependencies.Add(package.Key, rootPackageJsonEquivalent.Value);
-                updatedPackages.Add(package.Key, $"From {Dependencies} - {package.Value!} -> {rootPackageJsonEquivalent.Value}");
+                updatedPackages.Add(package.Key, $"in {Dependencies} from {package.Value!} to {rootPackageJsonEquivalent.Value}");
             }
 
             libraryPackageJson[Dependencies]!.ReplaceWith(newPackageJsonDependencies);
@@ -217,13 +226,38 @@ class Program
                 }
 
                 newPackageJsonPeerDependencies.Add(package.Key, rootPackageJsonEquivalent.Value);
-                updatedPackages.Add(package.Key, $"From {PeerDependencies} - {package.Value!} -> {rootPackageJsonEquivalent.Value}");
+                updatedPackages.Add(package.Key, $"in {PeerDependencies} from {package.Value!} to {rootPackageJsonEquivalent.Value}");
             }
 
             libraryPackageJson[PeerDependencies]!.ReplaceWith(newPackageJsonPeerDependencies);
         }
 
+        if (updatedPackages.Count > 0)
+        {
+            Console.WriteLine("Updating the following packages:");
+            foreach (var package in updatedPackages)
+            {
+                Console.WriteLine($"{package.Key} {package.Value}");
+            }
+        }
+
+        if (removedPackages.Count > 0)
+        {
+            Console.WriteLine("Removing the following packages:");
+            foreach (var package in removedPackages)
+            {
+                Console.WriteLine(package);
+            }
+        }
+
+        if (_dryRun)
+        {
+            Console.WriteLine("Dry run is enabled, changes have not been saved");
+            return;
+        }
+
         await SavePackageJson(libraryPackageJsonFileInfo, libraryPackageJson);
+        Console.WriteLine("Changes Saved Successfully");
     }
 
     private static async Task SavePackageJson(FileInfo packageJsonFileInfo, JsonNode json)
