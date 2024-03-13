@@ -139,6 +139,12 @@ public class FileService(string angularJsonFileName, string packageJsonFileName,
                     removedPackages.Add(package.Key);
                     continue;
                 }
+                
+                if (package.Value!.ToString() == rootPackageJsonEquivalent.Value)
+                {
+                    newPackageJsonDependencies.Add(package.Key, package.Value!.ToString());
+                    continue;
+                }
 
                 newPackageJsonDependencies.Add(package.Key, rootPackageJsonEquivalent.Value);
                 updatedPackages.Add(package.Key, $"From {Dependencies} - {package.Value!} -> {rootPackageJsonEquivalent.Value}");
@@ -161,6 +167,12 @@ public class FileService(string angularJsonFileName, string packageJsonFileName,
                 if (rootPackageJsonEquivalent.Equals(default(KeyValuePair<string, string>)))
                 {
                     removedPackages.Add(package.Key);
+                    continue;
+                }
+                
+                if (package.Value!.ToString() == rootPackageJsonEquivalent.Value)
+                {
+                    newPackageJsonPeerDependencies.Add(package.Key, package.Value!.ToString());
                     continue;
                 }
 
