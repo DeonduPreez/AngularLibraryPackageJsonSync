@@ -171,6 +171,13 @@ public class FileService(string angularJsonFileName, string packageJsonFileName,
             libraryPackageJson[PeerDependencies]!.ReplaceWith(newPackageJsonPeerDependencies);
         }
         
+                
+        if (updatedPackages.Count == 0 && removedPackages.Count == 0)
+        {
+            Console.WriteLine("No changes were necessary");
+            return;
+        }
+        
         if (updatedPackages.Count > 0)
         {
             Console.WriteLine("Updating the following packages:");
