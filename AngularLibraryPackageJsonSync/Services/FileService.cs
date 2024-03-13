@@ -109,7 +109,7 @@ public class FileService(string angularJsonFileName, string packageJsonFileName,
         var libraryPackageJsonFileInfo = GetFileInfoFromDirectory(Path.Combine(rootAngularDir.FullName, libraryProject.Value.Root), mPackageJsonFileName);
         if (libraryPackageJsonFileInfo == null)
         {
-            Console.WriteLine($"{mPackageJsonFileName} file could not be found in {libraryProject.Value.Root} for library {libraryProject.Key}. Are you sure you are in an Angular directory?");
+            Console.WriteLine($"{mPackageJsonFileName} file could not be found in {libraryProject.Value.Root} for library {libraryProject.Key}.");
             return;
         }
 
